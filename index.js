@@ -1,15 +1,7 @@
-// Copyright (c) 2014 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-// extract from chromium source code by @liuwayong
 (function () {
     'use strict';
     /**
      * T-Rex runner.
-     * @param {string} outerContainerId Outer containing element id.
-     * @param {Object} opt_config
-     * @constructor
-     * @export
      */
     function Runner(outerContainerId, opt_config) {
         // Singleton
@@ -44,7 +36,6 @@
 
         this.obstacles = [];
 
-        this.activated = false; // Whether the easter egg has been activated.
         this.playing = false; // Whether the game is currently in play state.
         this.crashed = false;
         this.paused = false;
@@ -65,42 +56,32 @@
         this.images = {};
         this.imagesLoaded = 0;
 
-        if (this.isDisabled()) {
-            this.setupDisabledRunner();
-        } else {
-            this.loadImages();
-        }
+        this.loadImages();
+        
     }
     window['Runner'] = Runner;
 
 
     /**
      * Default game width.
-     * @const
      */
     var DEFAULT_WIDTH = 600;
 
     /**
      * Frames per second.
-     * @const
      */
     var FPS = 60;
 
-    /** @const */
     var IS_HIDPI = window.devicePixelRatio > 1;
 
-    /** @const */
     var IS_IOS = /iPad|iPhone|iPod/.test(window.navigator.platform);
 
-    /** @const */
     var IS_MOBILE = /Android/.test(window.navigator.userAgent) || IS_IOS;
 
-    /** @const */
     var IS_TOUCH_ENABLED = 'ontouchstart' in window;
 
     /**
      * Default game configuration.
-     * @enum {number}
      */
     Runner.config = {
         ACCELERATION: 0.001,
@@ -131,7 +112,6 @@
 
     /**
      * Default dimensions.
-     * @enum {string}
      */
     Runner.defaultDimensions = {
         WIDTH: DEFAULT_WIDTH,
@@ -141,7 +121,6 @@
 
     /**
      * CSS class names.
-     * @enum {string}
      */
     Runner.classes = {
         ARCADE_MODE: 'arcade-mode',
@@ -158,21 +137,8 @@
 
     /**
      * Sprite definition layout of the spritesheet.
-     * @enum {Object}
      */
     Runner.spriteDefinition = {
-        LDPI: {
-            CACTUS_LARGE: { x: 332, y: 2 },
-            CACTUS_SMALL: { x: 228, y: 2 },
-            CLOUD: { x: 86, y: 2 },
-            HORIZON: { x: 2, y: 54 },
-            MOON: { x: 484, y: 2 },
-            PTERODACTYL: { x: 134, y: 2 },
-            RESTART: { x: 2, y: 2 },
-            TEXT_SPRITE: { x: 655, y: 2 },
-            TREX: { x: 848, y: 2 },
-            STAR: { x: 645, y: 2 }
-        },
         HDPI: {
             CACTUS_LARGE: { x: 652, y: 2 },
             CACTUS_SMALL: { x: 446, y: 2 },
@@ -190,7 +156,6 @@
 
     /**
      * Sound FX. Reference to the ID of the audio tag on interstitial page.
-     * @enum {string}
      */
     Runner.sounds = {
         BUTTON_PRESS: 'offline-sound-press',
@@ -201,7 +166,6 @@
 
     /**
      * Key code mapping.
-     * @enum {Object}
      */
     Runner.keycodes = {
         JUMP: { '38': 1, '32': 1 },  // Up, spacebar
@@ -212,7 +176,6 @@
 
     /**
      * Runner event names.
-     * @enum {string}
      */
     Runner.events = {
         ANIM_END: 'webkitAnimationEnd',
@@ -232,70 +195,14 @@
 
 
     Runner.prototype = {
-        /**
-         * Whether the easter egg has been disabled. CrOS enterprise enrolled devices.
-         * @return {boolean}
-         */
-        isDisabled: function () {
-            // return loadTimeData && loadTimeData.valueExists('disabledEasterEgg');
-            return false;
-        },
-
-        /**
-         * For disabled instances, set up a snackbar with the disabled message.
-         */
-        setupDisabledRunner: function () {
-            this.containerEl = document.createElement('div');
-            this.containerEl.className = Runner.classes.SNACKBAR;
-            this.containerEl.textContent = loadTimeData.getValue('disabledEasterEgg');
-            this.outerContainerEl.appendChild(this.containerEl);
-
-            // Show notification when the activation key is pressed.
-            document.addEventListener(Runner.events.KEYDOWN, function (e) {
-                if (Runner.keycodes.JUMP[e.keyCode]) {
-                    this.containerEl.classList.add(Runner.classes.SNACKBAR_SHOW);
-                    document.querySelector('.icon').classList.add('icon-disabled');
-                }
-            }.bind(this));
-        },
-
-        /**
-         * Setting individual settings for debugging.
-         * @param {string} setting
-         * @param {*} value
-         */
-        updateConfigSetting: function (setting, value) {
-            if (setting in this.config && value != undefined) {
-                this.config[setting] = value;
-
-                switch (setting) {
-                    case 'GRAVITY':
-                    case 'MIN_JUMP_HEIGHT':
-                    case 'SPEED_DROP_COEFFICIENT':
-                        this.tRex.config[setting] = value;
-                        break;
-                    case 'INITIAL_JUMP_VELOCITY':
-                        this.tRex.setJumpVelocity(value);
-                        break;
-                    case 'SPEED':
-                        this.setSpeed(value);
-                        break;
-                }
-            }
-        },
 
         /**
          * Cache the appropriate image sprite from the page and get the sprite sheet
          * definition.
          */
         loadImages: function () {
-            if (IS_HIDPI) {
-                Runner.imageSprite = document.getElementById('offline-resources-2x');
-                this.spriteDef = Runner.spriteDefinition.HDPI;
-            } else {
-                Runner.imageSprite = document.getElementById('offline-resources-1x');
-                this.spriteDef = Runner.spriteDefinition.LDPI;
-            }
+            Runner.imageSprite = document.getElementById('offline-resources-2x');
+            this.spriteDef = Runner.spriteDefinition.HDPI;
 
             if (Runner.imageSprite.complete) {
                 this.init();
@@ -332,7 +239,6 @@
 
         /**
          * Sets the game speed. Adjust the speed accordingly if on a smaller screen.
-         * @param {number} opt_speed
          */
         setSpeed: function (opt_speed) {
             var speed = opt_speed || this.currentSpeed;
@@ -426,9 +332,6 @@
 
             this.dimensions.WIDTH = this.outerContainerEl.offsetWidth - padding * 2;
             this.dimensions.WIDTH = Math.min(DEFAULT_WIDTH, this.dimensions.WIDTH); //Arcade Mode
-            if (this.activated) {
-                this.setArcadeModeContainerScale();
-            }
             
             // Redraw the elements back onto the canvas.
             if (this.canvas) {
@@ -684,9 +587,6 @@
                         this.loadSounds();
                         this.playing = true;
                         this.update();
-                        if (window.errorPageController) {
-                            errorPageController.trackEasterEgg();
-                        }
                     }
                     //  Play sound effect and jump on starting the game for the first time.
                     if (!this.tRex.jumping && !this.tRex.ducking) {
@@ -919,14 +819,6 @@
      * Updates the canvas size taking into
      * account the backing store pixel ratio and
      * the device pixel ratio.
-     *
-     * See article by Paul Lewis:
-     * http://www.html5rocks.com/en/tutorials/canvas/hidpi/
-     *
-     * @param {HTMLCanvasElement} canvas
-     * @param {number} opt_width
-     * @param {number} opt_height
-     * @return {boolean} Whether the canvas was scaled.
      */
     Runner.updateCanvasScaling = function (canvas, opt_width, opt_height) {
         var context = canvas.getContext('2d');
@@ -963,9 +855,6 @@
 
     /**
      * Get random number.
-     * @param {number} min
-     * @param {number} max
-     * @param {number}
      */
     function getRandomNum(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -974,7 +863,6 @@
 
     /**
      * Vibrate on mobile devices.
-     * @param {number} duration Duration of the vibration in milliseconds.
      */
     function vibrate(duration) {
         if (IS_MOBILE && window.navigator.vibrate) {
@@ -985,11 +873,6 @@
 
     /**
      * Create canvas element.
-     * @param {HTMLElement} container Element to append canvas to.
-     * @param {number} width
-     * @param {number} height
-     * @param {string} opt_classname
-     * @return {HTMLCanvasElement}
      */
     function createCanvas(container, width, height, opt_classname) {
         var canvas = document.createElement('canvas');
@@ -1005,7 +888,6 @@
 
     /**
      * Decodes the base 64 audio to ArrayBuffer used by Web Audio.
-     * @param {string} base64String
      */
     function decodeBase64ToArrayBuffer(base64String) {
         var len = (base64String.length / 4) * 3;
@@ -1022,7 +904,6 @@
 
     /**
      * Return the current timestamp.
-     * @return {number}
      */
     function getTimeStamp() {
         return IS_IOS ? new Date().getTime() : performance.now();
@@ -1033,12 +914,7 @@
 
 
     /**
-     * Game over panel.
-     * @param {!HTMLCanvasElement} canvas
-     * @param {Object} textImgPos
-     * @param {Object} restartImgPos
-     * @param {!Object} dimensions Canvas dimensions.
-     * @constructor
+     * Game over panel. dimensions.
      */
     function GameOverPanel(canvas, textImgPos, restartImgPos, dimensions) {
         this.canvas = canvas;
@@ -1052,7 +928,6 @@
 
     /**
      * Dimensions used in the panel.
-     * @enum {number}
      */
     GameOverPanel.dimensions = {
         TEXT_X: 0,
@@ -1067,8 +942,6 @@
     GameOverPanel.prototype = {
         /**
          * Update the panel dimensions.
-         * @param {number} width New canvas width.
-         * @param {number} opt_height Optional new canvas height.
          */
         updateDimensions: function (width, opt_height) {
             this.canvasDimensions.WIDTH = width;
@@ -1101,14 +974,12 @@
             var restartTargetX = centerX - (dimensions.RESTART_WIDTH / 2);
             var restartTargetY = this.canvasDimensions.HEIGHT / 2;
 
-            if (IS_HIDPI) {
-                textSourceY *= 2;
-                textSourceX *= 2;
-                textSourceWidth *= 2;
-                textSourceHeight *= 2;
-                restartSourceWidth *= 2;
-                restartSourceHeight *= 2;
-            }
+            textSourceY *= 2;
+            textSourceX *= 2;
+            textSourceWidth *= 2;
+            textSourceHeight *= 2;
+            restartSourceWidth *= 2;
+            restartSourceHeight *= 2;
 
             textSourceX += this.textImgPos.x;
             textSourceY += this.textImgPos.y;
@@ -1132,11 +1003,7 @@
 
     /**
      * Check for a collision.
-     * @param {!Obstacle} obstacle
-     * @param {!Trex} tRex T-rex object.
-     * @param {HTMLCanvasContext} opt_canvasCtx Optional canvas context for drawing
      *    collision boxes.
-     * @return {Array<CollisionBox>}
      */
     function checkForCollision(obstacle, tRex, opt_canvasCtx) {
         var obstacleBoxXPos = Runner.defaultDimensions.WIDTH + obstacle.xPos;
@@ -1155,11 +1022,6 @@
             obstacle.typeConfig.width * obstacle.size - 2,
             obstacle.typeConfig.height - 2);
 
-        // Debug outer box
-        if (opt_canvasCtx) {
-            drawCollisionBoxes(opt_canvasCtx, tRexBox, obstacleBox);
-        }
-
         // Simple outer bounds check.
         if (boxCompare(tRexBox, obstacleBox)) {
             var collisionBoxes = obstacle.collisionBoxes;
@@ -1176,11 +1038,6 @@
                         createAdjustedCollisionBox(collisionBoxes[i], obstacleBox);
                     var crashed = boxCompare(adjTrexBox, adjObstacleBox);
 
-                    // Draw boxes for debug.
-                    if (opt_canvasCtx) {
-                        drawCollisionBoxes(opt_canvasCtx, adjTrexBox, adjObstacleBox);
-                    }
-
                     if (crashed) {
                         return [adjTrexBox, adjObstacleBox];
                     }
@@ -1193,9 +1050,6 @@
 
     /**
      * Adjust the collision box.
-     * @param {!CollisionBox} box The original box.
-     * @param {!CollisionBox} adjustment Adjustment box.
-     * @return {CollisionBox} The adjusted collision box object.
      */
     function createAdjustedCollisionBox(box, adjustment) {
         return new CollisionBox(
@@ -1205,27 +1059,8 @@
             box.height);
     };
 
-
-    /**
-     * Draw the collision boxes for debug.
-     */
-    function drawCollisionBoxes(canvasCtx, tRexBox, obstacleBox) {
-        canvasCtx.save();
-        canvasCtx.strokeStyle = '#f00';
-        canvasCtx.strokeRect(tRexBox.x, tRexBox.y, tRexBox.width, tRexBox.height);
-
-        canvasCtx.strokeStyle = '#0f0';
-        canvasCtx.strokeRect(obstacleBox.x, obstacleBox.y,
-            obstacleBox.width, obstacleBox.height);
-        canvasCtx.restore();
-    };
-
-
     /**
      * Compare two collision boxes for a collision.
-     * @param {CollisionBox} tRexBox
-     * @param {CollisionBox} obstacleBox
-     * @return {boolean} Whether the boxes intersected.
      */
     function boxCompare(tRexBox, obstacleBox) {
         var crashed = false;
@@ -1251,10 +1086,6 @@
 
     /**
      * Collision box object.
-     * @param {number} x X position.
-     * @param {number} y Y Position.
-     * @param {number} w Width.
-     * @param {number} h Height.
      */
     function CollisionBox(x, y, w, h) {
         this.x = x;
@@ -1268,13 +1099,6 @@
 
     /**
      * Obstacle.
-     * @param {HTMLCanvasCtx} canvasCtx
-     * @param {Obstacle.type} type
-     * @param {Object} spritePos Obstacle position in sprite.
-     * @param {Object} dimensions
-     * @param {number} gapCoefficient Mutipler in determining the gap.
-     * @param {number} speed
-     * @param {number} opt_xOffset
      */
     function Obstacle(canvasCtx, type, spriteImgPos, dimensions,
         gapCoefficient, speed, opt_xOffset) {
@@ -1302,13 +1126,11 @@
 
     /**
      * Coefficient for calculating the maximum gap.
-     * @const
      */
     Obstacle.MAX_GAP_COEFFICIENT = 1.5;
 
     /**
      * Maximum obstacle grouping count.
-     * @const
      */
     Obstacle.MAX_OBSTACLE_LENGTH = 3,
 
@@ -1316,7 +1138,6 @@
         Obstacle.prototype = {
             /**
              * Initialise the DOM for the obstacle.
-             * @param {number} speed
              */
             init: function (speed) {
                 this.cloneCollisionBoxes();
@@ -1369,10 +1190,8 @@
                 var sourceWidth = this.typeConfig.width;
                 var sourceHeight = this.typeConfig.height;
 
-                if (IS_HIDPI) {
                     sourceWidth = sourceWidth * 2;
                     sourceHeight = sourceHeight * 2;
-                }
 
                 // X position in sprite.
                 var sourceX = (sourceWidth * this.size) * (0.5 * (this.size - 1)) +
@@ -1392,8 +1211,6 @@
 
             /**
              * Obstacle frame update.
-             * @param {number} deltaTime
-             * @param {number} speed
              */
             update: function (deltaTime, speed) {
                 if (!this.remove) {
@@ -1422,10 +1239,7 @@
 
             /**
              * Calculate a random gap size.
-             * - Minimum gap gets wider as speed increses
-             * @param {number} gapCoefficient
-             * @param {number} speed
-             * @return {number} The gap size.
+             * - Minimum gap gets wider as speed increses\
              */
             getGap: function (gapCoefficient, speed) {
                 var minGap = Math.round(this.width * speed +
@@ -1436,7 +1250,6 @@
 
             /**
              * Check if obstacle is visible.
-             * @return {boolean} Whether the obstacle is in the game area.
              */
             isVisible: function () {
                 return this.xPos + this.width > 0;
@@ -1520,9 +1333,6 @@
     //******************************************************************************
     /**
      * T-rex game character.
-     * @param {HTMLCanvas} canvas
-     * @param {Object} spritePos Positioning within image sprite.
-     * @constructor
      */
     function Trex(canvas, spritePos) {
         this.canvas = canvas;
@@ -1557,7 +1367,6 @@
 
     /**
      * T-rex player config.
-     * @enum {number}
      */
     Trex.config = {
         DROP_VELOCITY: -5,
@@ -1578,7 +1387,6 @@
 
     /**
      * Used in collision detection.
-     * @type {Array<CollisionBox>}
      */
     Trex.collisionBoxes = {
         DUCKING: [
@@ -1597,7 +1405,6 @@
 
     /**
      * Animation states.
-     * @enum {string}
      */
     Trex.status = {
         CRASHED: 'CRASHED',
@@ -1609,14 +1416,12 @@
 
     /**
      * Blinking coefficient.
-     * @const
      */
     Trex.BLINK_TIMING = 7000;
 
 
     /**
      * Animation config for different states.
-     * @enum {Object}
      */
     Trex.animFrames = {
         WAITING: {
@@ -1668,8 +1473,6 @@
 
         /**
          * Set the animation status.
-         * @param {!number} deltaTime
-         * @param {Trex.status} status Optional status to switch to.
          */
         update: function (deltaTime, opt_status) {
             this.timer += deltaTime;
@@ -1715,8 +1518,6 @@
 
         /**
          * Draw the t-rex to a particular position.
-         * @param {number} x
-         * @param {number} y
          */
         draw: function (x, y) {
             var sourceX = x;
@@ -1724,13 +1525,11 @@
             var sourceWidth = this.ducking && this.status != Trex.status.CRASHED ?
                 this.config.WIDTH_DUCK : this.config.WIDTH;
             var sourceHeight = this.config.HEIGHT;
-
-            if (IS_HIDPI) {
-                sourceX *= 2;
-                sourceY *= 2;
-                sourceWidth *= 2;
-                sourceHeight *= 2;
-            }
+        
+            sourceX *= 2;
+            sourceY *= 2;
+            sourceWidth *= 2;
+            sourceHeight *= 2;
 
             // Adjustments for sprite sheet position.
             sourceX += this.spritePos.x;
@@ -1764,7 +1563,6 @@
 
         /**
          * Make t-rex blink at random intervals.
-         * @param {number} time Current time in milliseconds.
          */
         blink: function (time) {
             var deltaTime = time - this.animStartTime;
@@ -1783,7 +1581,6 @@
 
         /**
          * Initialise a jump.
-         * @param {number} speed
          */
         startJump: function (speed) {
             if (!this.jumping) {
@@ -1808,8 +1605,6 @@
 
         /**
          * Update frame for a jump.
-         * @param {number} deltaTime
-         * @param {number} speed
          */
         updateJump: function (deltaTime, speed) {
             var msPerFrame = Trex.animFrames[this.status].msPerFrame;
@@ -1853,7 +1648,6 @@
         },
 
         /**
-         * @param {boolean} isDucking.
          */
         setDuck: function (isDucking) {
             if (isDucking && this.status != Trex.status.DUCKING) {
@@ -1885,10 +1679,6 @@
 
     /**
      * Handles displaying the distance meter.
-     * @param {!HTMLCanvasElement} canvas
-     * @param {Object} spritePos Image position in sprite.
-     * @param {number} canvasWidth
-     * @constructor
      */
     function DistanceMeter(canvas, spritePos, canvasWidth) {
         this.canvas = canvas;
@@ -1929,14 +1719,12 @@
     /**
      * Y positioning of the digits in the sprite sheet.
      * X position is always 0.
-     * @type {Array<number>}
      */
     DistanceMeter.yPos = [0, 13, 27, 40, 53, 67, 80, 93, 107, 120];
 
 
     /**
      * Distance meter config.
-     * @enum {number}
      */
     DistanceMeter.config = {
         // Number of digits.
@@ -1959,7 +1747,6 @@
     DistanceMeter.prototype = {
         /**
          * Initialise the distance meter to '00000'.
-         * @param {number} width Canvas width in px.
          */
         init: function (width) {
             var maxDistanceStr = '';
@@ -1977,7 +1764,6 @@
 
         /**
          * Calculate the xPos in the canvas.
-         * @param {number} canvasWidth
          */
         calcXPos: function (canvasWidth) {
             this.x = canvasWidth - (DistanceMeter.dimensions.DEST_WIDTH *
@@ -1986,9 +1772,6 @@
 
         /**
          * Draw a digit to canvas.
-         * @param {number} digitPos Position of the digit.
-         * @param {number} value Digit value 0-9.
-         * @param {boolean} opt_highScore Whether drawing the high score.
          */
         draw: function (digitPos, value, opt_highScore) {
             var sourceWidth = DistanceMeter.dimensions.WIDTH;
@@ -2001,12 +1784,9 @@
             var targetWidth = DistanceMeter.dimensions.WIDTH;
             var targetHeight = DistanceMeter.dimensions.HEIGHT;
 
-            // For high DPI we 2x source values.
-            if (IS_HIDPI) {
-                sourceWidth *= 2;
-                sourceHeight *= 2;
-                sourceX *= 2;
-            }
+            sourceWidth *= 2;
+            sourceHeight *= 2;
+            sourceX *= 2;
 
             sourceX += this.spritePos.x;
             sourceY += this.spritePos.y;
@@ -2033,8 +1813,6 @@
 
         /**
          * Covert pixel distance to a 'real' distance.
-         * @param {number} distance Pixel distance ran.
-         * @return {number} The 'real' distance ran.
          */
         getActualDistance: function (distance) {
             return distance ? Math.round(distance * this.config.COEFFICIENT) : 0;
@@ -2042,9 +1820,6 @@
 
         /**
          * Update the distance meter.
-         * @param {number} distance
-         * @param {number} deltaTime
-         * @return {boolean} Whether the acheivement sound fx should be played.
          */
         update: function (deltaTime, distance) {
             var paint = true;
@@ -2122,7 +1897,6 @@
         /**
          * Set the highscore as a array string.
          * Position of char in the sprite: H - 10, I - 11.
-         * @param {number} distance Distance ran in pixels.
          */
         setHighScore: function (distance) {
             distance = this.getActualDistance(distance);
@@ -2147,9 +1921,6 @@
     /**
      * Cloud background item.
      * Similar to an obstacle object but without collision boxes.
-     * @param {HTMLCanvasElement} canvas Canvas element.
-     * @param {Object} spritePos Position of image in sprite.
-     * @param {number} containerWidth
      */
     function Cloud(canvas, spritePos, containerWidth) {
         this.canvas = canvas;
@@ -2168,7 +1939,6 @@
 
     /**
      * Cloud object config.
-     * @enum {number}
      */
     Cloud.config = {
         HEIGHT: 14,
@@ -2214,7 +1984,6 @@
 
         /**
          * Update the cloud position.
-         * @param {number} speed
          */
         update: function (speed) {
             if (!this.remove) {
@@ -2230,7 +1999,6 @@
 
         /**
          * Check if the cloud is visible on the stage.
-         * @return {boolean}
          */
         isVisible: function () {
             return this.xPos + Cloud.config.WIDTH > 0;
@@ -2257,9 +2025,6 @@
         this.placeStars();
     };
 
-    /**
-     * @enum {number}
-     */
     NightMode.config = {
         FADE_SPEED: 0.035,
         HEIGHT: 40,
@@ -2276,8 +2041,6 @@
     NightMode.prototype = {
         /**
          * Update moving moon, changing phases.
-         * @param {boolean} activated Whether night mode is activated.
-         * @param {number} delta
          */
         update: function (activated, delta) {
             // Moon phase.
@@ -2331,16 +2094,14 @@
             var moonSourceX = this.spritePos.x + NightMode.phases[this.currentPhase];
             var moonOutputWidth = moonSourceWidth;
             var starSize = NightMode.config.STAR_SIZE;
-            var starSourceX = Runner.spriteDefinition.LDPI.STAR.x;
+            var starSourceX = Runner.spriteDefinition.HDPI.STAR.x;
 
-            if (IS_HIDPI) {
-                moonSourceWidth *= 2;
-                moonSourceHeight *= 2;
-                moonSourceX = this.spritePos.x +
-                    (NightMode.phases[this.currentPhase] * 2);
-                starSize *= 2;
-                starSourceX = Runner.spriteDefinition.HDPI.STAR.x;
-            }
+            moonSourceWidth *= 2;
+            moonSourceHeight *= 2;
+            moonSourceX = this.spritePos.x +
+                (NightMode.phases[this.currentPhase] * 2);
+            starSize *= 2;
+            starSourceX = Runner.spriteDefinition.HDPI.STAR.x;
 
             this.canvasCtx.save();
             this.canvasCtx.globalAlpha = this.opacity;
@@ -2375,13 +2136,8 @@
                 this.stars[i].x = getRandomNum(segmentSize * i, segmentSize * (i + 1));
                 this.stars[i].y = getRandomNum(0, NightMode.config.STAR_MAX_Y);
 
-                if (IS_HIDPI) {
-                    this.stars[i].sourceY = Runner.spriteDefinition.HDPI.STAR.y +
-                        NightMode.config.STAR_SIZE * 2 * i;
-                } else {
-                    this.stars[i].sourceY = Runner.spriteDefinition.LDPI.STAR.y +
-                        NightMode.config.STAR_SIZE * i;
-                }
+                this.stars[i].sourceY = Runner.spriteDefinition.HDPI.STAR.y +
+                    NightMode.config.STAR_SIZE * 2 * i;
             }
         },
 
@@ -2399,9 +2155,6 @@
     /**
      * Horizon Line.
      * Consists of two connecting lines. Randomly assigns a flat / bumpy horizon.
-     * @param {HTMLCanvasElement} canvas
-     * @param {Object} spritePos Horizon position in sprite.
-     * @constructor
      */
     function HorizonLine(canvas, spritePos) {
         this.spritePos = spritePos;
@@ -2422,7 +2175,6 @@
 
     /**
      * Horizon line dimensions.
-     * @enum {number}
      */
     HorizonLine.dimensions = {
         WIDTH: 600,
@@ -2480,8 +2232,6 @@
 
         /**
          * Update the x position of an indivdual piece of the line.
-         * @param {number} pos Line position.
-         * @param {number} increment
          */
         updateXPos: function (pos, increment) {
             var line1 = pos;
@@ -2499,8 +2249,6 @@
 
         /**
          * Update the horizon line.
-         * @param {number} deltaTime
-         * @param {number} speed
          */
         update: function (deltaTime, speed) {
             var increment = Math.floor(speed * (FPS / 1000) * deltaTime);
@@ -2527,11 +2275,6 @@
 
     /**
      * Horizon background class.
-     * @param {HTMLCanvasElement} canvas
-     * @param {Object} spritePos Sprite positioning.
-     * @param {Object} dimensions Canvas dimensions.
-     * @param {number} gapCoefficient
-     * @constructor
      */
     function Horizon(canvas, spritePos, dimensions, gapCoefficient) {
         this.canvas = canvas;
@@ -2558,7 +2301,6 @@
 
     /**
      * Horizon config.
-     * @enum {number}
      */
     Horizon.config = {
         BG_CLOUD_SPEED: 0.2,
@@ -2581,12 +2323,8 @@
         },
 
         /**
-         * @param {number} deltaTime
-         * @param {number} currentSpeed
-         * @param {boolean} updateObstacles Used as an override to prevent
          *     the obstacles from being updated / added. This happens in the
          *     ease in section.
-         * @param {boolean} showNightMode Night mode activated.
          */
         update: function (deltaTime, currentSpeed, updateObstacles, showNightMode) {
             this.runningTime += deltaTime;
@@ -2601,8 +2339,6 @@
 
         /**
          * Update the cloud positions.
-         * @param {number} deltaTime
-         * @param {number} currentSpeed
          */
         updateClouds: function (deltaTime, speed) {
             var cloudSpeed = this.cloudSpeed / 1000 * deltaTime * speed;
@@ -2633,8 +2369,6 @@
 
         /**
          * Update the obstacle positions.
-         * @param {number} deltaTime
-         * @param {number} currentSpeed
          */
         updateObstacles: function (deltaTime, currentSpeed) {
             // Obstacles, move to Horizon layer.
@@ -2673,7 +2407,6 @@
 
         /**
          * Add a new obstacle.
-         * @param {number} currentSpeed
          */
         addNewObstacle: function (currentSpeed) {
             var obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
@@ -2702,7 +2435,6 @@
         /**
          * Returns whether the previous two obstacles are the same as the next one.
          * Maximum duplication is set in config value MAX_OBSTACLE_DUPLICATION.
-         * @return {boolean}
          */
         duplicateObstacleCheck: function (nextObstacleType) {
             var duplicateCount = 0;
@@ -2726,8 +2458,6 @@
 
         /**
          * Update the canvas width and scaling.
-         * @param {number} width Canvas width.
-         * @param {number} height Canvas height.
          */
         resize: function (width, height) {
             this.canvas.width = width;
