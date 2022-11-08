@@ -1187,11 +1187,8 @@
              * Draw and crop based on size.
              */
             draw: function () {
-                var sourceWidth = this.typeConfig.width;
-                var sourceHeight = this.typeConfig.height;
-
-                    sourceWidth = sourceWidth * 2;
-                    sourceHeight = sourceHeight * 2;
+                var sourceWidth = this.typeConfig.width * 2;
+                var sourceHeight = this.typeConfig.height * 2;
 
                 // X position in sprite.
                 var sourceX = (sourceWidth * this.size) * (0.5 * (this.size - 1)) +
@@ -1371,7 +1368,7 @@
     Trex.config = {
         DROP_VELOCITY: -5,
         GRAVITY: 0.6,
-        HEIGHT: 47,
+        HEIGHT: 52,
         HEIGHT_DUCK: 25,
         INIITAL_JUMP_VELOCITY: -10,
         INTRO_DURATION: 1500,
@@ -1437,7 +1434,7 @@
             msPerFrame: 1000 / 60
         },
         JUMPING: {
-            frames: [0],
+            frames: [381],
             msPerFrame: 1000 / 60
         },
         DUCKING: {
